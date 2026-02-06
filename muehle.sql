@@ -1,0 +1,6 @@
+CREATE TABLE muehle (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date VARCHAR(10),
+  time VARCHAR(5),
+  timedelta DECIMAL(4,1)
+);
