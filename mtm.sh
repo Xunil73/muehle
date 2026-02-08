@@ -5,6 +5,7 @@
 # -t <hh:mm>
 # -x +/- n in sek + save to db
 # -s show data
+# -e erase line number n
 
 DB_FILE_NAME='./muehle.db'
 if [ ! -e "$DB_FILE_NAME" ]; then
@@ -33,6 +34,11 @@ function parsetime {
   fi
 };
 
+# eingegebenes Komma wird zum Punkt
+function parsegang {
+  echo `echo $1 | sed 's/[,_-]/\./g'`
+};
+
 # Schalter zum Abspeichern der Werte / zum Anzeigen der Werte
 saveit=0
 showit=0
@@ -42,7 +48,7 @@ do
    case $opt in
        d) datenow=`parsedate $OPTARG` ;;
        t) tmenow=`parsetime $OPTARG` ;;
-       x) gang=$OPTARG
+       x) gang=`parsegang $OPTARG`
           saveit=1 ;;
        s) showit=1 ;;
        e) eraseit=$OPTARG ;;
@@ -54,10 +60,19 @@ if [ $saveit -eq 1 ]; then
                    VALUES (\"$datenow\",\"$tmenow\", \"$gang\");"
 fi
 
+#TODO wir muessen die Ausgabe unten noch auf eine Stelle nach dem Komma begrenzen
 if [ $showit -eq 1 ]; then
-  sqlite3 muehle.db "SELECT * FROM muehle;"
+  sqlite3  muehle.db "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER()) AS num,\
+                                          printf ('%15s', date) AS tag,\
+                                          printf ('%12s', time) AS lt,\
+                                          printf ('%8.1f', timedelta) AS lt_delta\
+                                      FROM muehle) \
+                                      SELECT num, tag, lt, lt_delta,\
+                                          printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS zum_vortag\
+                                      FROM gesamt;"
 fi
 
+#TODO: das muss angepasst werden, wir arbeiten nicht nach der id sondern nach der ROW_NUMBER()"
 if [ $eraseit -ne 0 ]; then
   sqlite3 muehle.db "DELETE FROM muehle WHERE id=$eraseit;"
 fi
