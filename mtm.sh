@@ -36,7 +36,7 @@ function parsetime {
 
 # eingegebenes Komma wird zum Punkt
 function parsegang {
-  echo `echo $1 | sed 's/[,_-]/\./g'`
+  echo `echo $1 | sed 's/[,_]/\./g'`
 };
 
 # Schalter zum Abspeichern der Werte / zum Anzeigen der Werte
@@ -60,7 +60,8 @@ if [ $saveit -eq 1 ]; then
                    VALUES (\"$datenow\",\"$tmenow\", \"$gang\");"
 fi
 
-#TODO wir muessen die Ausgabe unten noch auf eine Stelle nach dem Komma begrenzen
+# Ausgabe formatiert, Floatwerte auf eine Stelle nach dem Komma begrenzt,
+# alles Rechtsbuendig und mit ein bissl Abstand.
 if [ $showit -eq 1 ]; then
   sqlite3  muehle.db "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER()) AS num,\
                                           printf ('%15s', date) AS tag,\
