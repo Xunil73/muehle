@@ -1,0 +1,9 @@
+Abfrage die Zeilen nach der Rowid loescht...
+...ausprobieren!
+
+WITH CTE AS (
+    SELECT rowid, ROW_NUMBER() OVER (ORDER BY eine_spalte) AS RowNum
+    FROM tabellenname
+)
+DELETE FROM tabellenname
+WHERE rowid IN (SELECT rowid FROM CTE WHERE RowNum = 3);

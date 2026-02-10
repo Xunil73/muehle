@@ -75,6 +75,7 @@ fi
 
 #TODO: das muss angepasst werden, wir arbeiten nicht nach der id sondern nach der ROW_NUMBER()"
 if [ $eraseit -ne 0 ]; then
-  sqlite3 muehle.db "DELETE FROM muehle WHERE id=$eraseit;"
+  sqlite3 muehle.db "DELETE from muehle WHERE (WITH gesamt AS (SELECT ROW_NUMBER() OVER())=$eraseit;"
+#  sqlite3 muehle.db "DELETE FROM muehle WHERE id=$eraseit;"
 fi
 
