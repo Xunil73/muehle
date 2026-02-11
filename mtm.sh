@@ -63,7 +63,7 @@ fi
 # Ausgabe formatiert, Floatwerte auf eine Stelle nach dem Komma begrenzt,
 # alles Rechtsbuendig und mit ein bissl Abstand.
 if [ $showit -eq 1 ]; then
-  sqlite3 muehle.db ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER()) AS num,\
+  sqlite3 muehle.db ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER(ORDER BY date, time)) AS num,\
                                           printf ('%15s', date) AS tag,\
                                           printf ('%12s', time) AS lt,\
                                           printf ('%8.1f', timedelta) AS lt_delta\
@@ -75,7 +75,7 @@ fi
 
 #TODO: das muss angepasst werden, wir arbeiten nicht nach der id sondern nach der ROW_NUMBER()"
 if [ $eraseit -ne 0 ]; then
-  sqlite3 muehle.db "WITH nummer AS (SELECT id, ROW_NUMBER() OVER (ORDER BY id) AS rowNum FROM muehle) \
+  sqlite3 muehle.db "WITH nummer AS (SELECT id, ROW_NUMBER() OVER (ORDER BY date, time) AS rowNum FROM muehle) \
                      DELETE FROM muehle WHERE id IN (SELECT id FROM nummer WHERE rowNum=$eraseit);"    
 fi
 
