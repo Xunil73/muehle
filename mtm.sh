@@ -63,7 +63,7 @@ fi
 # Ausgabe formatiert, Floatwerte auf eine Stelle nach dem Komma begrenzt,
 # alles Rechtsbuendig und mit ein bissl Abstand.
 if [ $showit -eq 1 ]; then
-  sqlite3  muehle.db "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER()) AS num,\
+  sqlite3 muehle.db ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER()) AS num,\
                                           printf ('%15s', date) AS tag,\
                                           printf ('%12s', time) AS lt,\
                                           printf ('%8.1f', timedelta) AS lt_delta\
