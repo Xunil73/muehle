@@ -60,9 +60,17 @@ if [ $saveit -eq 1 ]; then
                    VALUES (\"$datenow\",\"$tmenow\", \"$gang\");"
 fi
 
+# TODO: berechnung der seitennzahl lines / 15 geht noch nicht. anzeige der 
+# letzten 15 zeilen geht.
+# angedacht ist: -s <seite> 
+#  ...FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15 * $OPTARG
+# ...oder so:
+
+
 # Ausgabe formatiert, Floatwerte auf eine Stelle nach dem Komma begrenzt,
 # alles Rechtsbuendig und mit ein bissl Abstand.
 if [ $showit -eq 1 ]; then
+  lines=`sqlite3 muehle.db "SELECT COUNT(*) FROM muehle;"`
   sqlite3 muehle.db ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER(ORDER BY date, time)) AS num,\
                                           printf ('%15s', date) AS tag,\
                                           printf ('%12s', time) AS lt,\
@@ -70,10 +78,11 @@ if [ $showit -eq 1 ]; then
                                       FROM muehle) \
                                       SELECT num, tag, lt, lt_delta,\
                                           printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS zum_vortag\
-                                      FROM gesamt;"
+                                      FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15 ;"
+  echo "Es gibt $(( $lines / 15 )) Speicherseiten hier. Aufruf mit mtm -s <n>"
 fi
 
-#TODO: das muss angepasst werden, wir arbeiten nicht nach der id sondern nach der ROW_NUMBER()"
+# wir loeschen Eintraege korrekt nach ROW_NUMBER
 if [ $eraseit -ne 0 ]; then
   sqlite3 muehle.db "WITH nummer AS (SELECT id, ROW_NUMBER() OVER (ORDER BY date, time) AS rowNum FROM muehle) \
                      DELETE FROM muehle WHERE id IN (SELECT id FROM nummer WHERE rowNum=$eraseit);"    
