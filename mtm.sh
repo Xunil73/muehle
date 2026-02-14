@@ -78,8 +78,12 @@ if [ $showit -eq 1 ]; then
                                       FROM muehle) \
                                       SELECT num, tag, lt, lt_delta,\
                                           printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS zum_vortag\
-                                      FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15 ;"
-  echo "Es gibt $(( $lines / 15 )) Speicherseiten hier. Aufruf mit mtm -s <n>"
+                                      FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15;"
+  speicherseiten=$(( $lines / 15 ))
+  modulo=`echo "$lines % 15" | bc`
+  if [ $modulo > 0 ]; then
+    speicherseiten=`expr $speicherseiten + 1`
+  fi
 fi
 
 # wir loeschen Eintraege korrekt nach ROW_NUMBER
