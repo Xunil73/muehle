@@ -43,14 +43,18 @@ function parsegang {
 saveit=0
 showit=0
 eraseit=0
-while getopts d:t:x:se: opt
+while getopts d:t:x:s:e: opt
 do
    case $opt in
        d) datenow=`parsedate $OPTARG` ;;
        t) tmenow=`parsetime $OPTARG` ;;
        x) gang=`parsegang $OPTARG`
           saveit=1 ;;
-       s) showit=1 ;;
+# DEBUG TODO hier versuche ich showit einen Wert zuzuweisen wenn kein Argument
+# angegeben wurde. Ich glaube im Buch steht mehr als im Netz wenn es darum 
+# geht, Optionsargumente mit Werten vorzubelegen, dh. wahlweise 
+# mit / ohne Argument aufrufen: funktioniert nur nicht:
+       s) showit=${$OPTARG:-1} ;;
        e) eraseit=$OPTARG ;;
    esac
 done
@@ -68,8 +72,11 @@ fi
 
 
 # Ausgabe formatiert, Floatwerte auf eine Stelle nach dem Komma begrenzt,
-# alles Rechtsbuendig und mit ein bissl Abstand.
-if [ $showit -eq 1 ]; then
+# alles Rechtsbuendig und mit ein bissl Abstand. Wir berechnen die Anzahl 
+# der Tabellenseiten, da nur immer max 15 Seiten der gesamten Tabelle ausgegeben
+# werden. Die Speicherseitenmagie weiter unten kommt daher weil z.B. 1,8 Tabellen-
+# seiten zu 1 Tabellenseite gerundet werden. 
+if [ $showit -gt 0 ]; then
   lines=`sqlite3 muehle.db "SELECT COUNT(*) FROM muehle;"`
   sqlite3 muehle.db ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER(ORDER BY date, time)) AS num,\
                                           printf ('%15s', date) AS tag,\
@@ -78,7 +85,7 @@ if [ $showit -eq 1 ]; then
                                       FROM muehle) \
                                       SELECT num, tag, lt, lt_delta,\
                                           printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS zum_vortag\
-                                      FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15;"
+                                      FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15 * $showit;"
   speicherseiten=$(( $lines / 15 ))
   modulo=`echo "$lines % 15" | bc`
   if [ $modulo > 0 ]; then
