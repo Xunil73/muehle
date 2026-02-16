@@ -61,15 +61,8 @@ if [ $saveit -eq 1 ]; then
                    VALUES (\"$datenow\",\"$tmenow\", \"$gang\");"
 fi
 
-# TODO: berechnung der seitennzahl lines / 15 geht noch nicht. anzeige der 
-# letzten 15 zeilen geht.
-# angedacht ist: -s <seite> 
-#  ...FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15 * $OPTARG
-# ...oder so:
-
-
 # Ausgabe formatiert, Floatwerte auf eine Stelle nach dem Komma begrenzt,
-# alles Rechtsbuendig und mit ein bissl Abstand. Wir berechnen die Anzahl 
+# alles Rechtsbuendig und in einer Box mit ein bissl Abstand. Wir berechnen die Anzahl 
 # der Tabellenseiten, da nur immer max 15 Seiten der gesamten Tabelle ausgegeben
 # werden. Die Speicherseitenmagie weiter unten kommt daher weil z.B. 1,8 Tabellen-
 # seiten zu 1 Tabellenseite gerundet werden. 
@@ -82,7 +75,7 @@ if [ $showit -gt 0 ]; then
     speicherseiten=`expr $speicherseiten + 1`
   fi
   if [ $showit -gt $speicherseiten ]; then
-    echo "ungültige Seitenzahl"
+    echo "mtm: ungültige Seite: max Speicherseiten: $speicherseiten"
     exit 1
   fi
 
@@ -94,8 +87,8 @@ if [ $showit -gt 0 ]; then
                                       SELECT num, tag, lt, lt_delta,\
                                           printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS zum_vortag\
                                       FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15 * $showit;"
+
   echo "Tabellenseiten: $speicherseiten" 
-  echo "mtm: usage: -s <seite>"
 fi
 
 # wir loeschen Eintraege korrekt nach ROW_NUMBER
