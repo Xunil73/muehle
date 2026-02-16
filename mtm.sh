@@ -43,19 +43,16 @@ function parsegang {
 saveit=0
 showit=0
 eraseit=0
-while getopts d:t:x:s:e: opt
+while getopts :s:d:t:x:e: opt
 do
    case $opt in
        d) datenow=`parsedate $OPTARG` ;;
        t) tmenow=`parsetime $OPTARG` ;;
        x) gang=`parsegang $OPTARG`
           saveit=1 ;;
-# DEBUG TODO hier versuche ich showit einen Wert zuzuweisen wenn kein Argument
-# angegeben wurde. Ich glaube im Buch steht mehr als im Netz wenn es darum 
-# geht, Optionsargumente mit Werten vorzubelegen, dh. wahlweise 
-# mit / ohne Argument aufrufen: funktioniert nur nicht:
-       s) showit=${$OPTARG:-1} ;;
+       s) showit=$OPTARG ;;
        e) eraseit=$OPTARG ;;
+       :) showit=1 ;;
    esac
 done
 
@@ -77,7 +74,18 @@ fi
 # werden. Die Speicherseitenmagie weiter unten kommt daher weil z.B. 1,8 Tabellen-
 # seiten zu 1 Tabellenseite gerundet werden. 
 if [ $showit -gt 0 ]; then
+  # wir berechnen wie viel Seiten es a 15 Zeilen gibt 
   lines=`sqlite3 muehle.db "SELECT COUNT(*) FROM muehle;"`
+  speicherseiten=$(( $lines / 15 ))
+  modulo=`echo "$lines % 15" | bc`
+  if [ $modulo > 0 ]; then
+    speicherseiten=`expr $speicherseiten + 1`
+  fi
+  if [ $showit -gt $speicherseiten ]; then
+    echo "ungültige Seitenzahl"
+    exit 1
+  fi
+
   sqlite3 muehle.db ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER(ORDER BY date, time)) AS num,\
                                           printf ('%15s', date) AS tag,\
                                           printf ('%12s', time) AS lt,\
@@ -86,11 +94,8 @@ if [ $showit -gt 0 ]; then
                                       SELECT num, tag, lt, lt_delta,\
                                           printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS zum_vortag\
                                       FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15 * $showit;"
-  speicherseiten=$(( $lines / 15 ))
-  modulo=`echo "$lines % 15" | bc`
-  if [ $modulo > 0 ]; then
-    speicherseiten=`expr $speicherseiten + 1`
-  fi
+  echo "Tabellenseiten: $speicherseiten" 
+  echo "mtm: usage: -s <seite>"
 fi
 
 # wir loeschen Eintraege korrekt nach ROW_NUMBER
