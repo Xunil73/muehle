@@ -3,9 +3,9 @@
 # Optionen
 # -d <YYYY-MM-DD>
 # -t <hh:mm>
-# -x +/- n in sek + save to db
-# -s show data
-# -e erase line number n
+# -x <n> +/- n in sek + save to db
+# -s <n> show data page number <n>
+# -e <n> erase line number <n>
 
 DB_FILE_NAME='./muehle.db'
 if [ ! -e "$DB_FILE_NAME" ]; then
@@ -56,6 +56,10 @@ do
    esac
 done
 
+# Anmerkung zu case oben: gibt es noch eine bessere Möglichkeit getopts bei-
+# zubringen dass die Option -s ganz ohne / wahlweise mit Argumenten aufgerufen
+# werden kann? habe es geloest in dem im Falle eines falschen Aufrufs der
+# Doppelpunkt-Aufruf erfolgt. Nicht schoen aber zweckmaessig...
 if [ $saveit -eq 1 ]; then  
   sqlite3 muehle.db "INSERT OR IGNORE INTO muehle (date, time, timedelta) \
                    VALUES (\"$datenow\",\"$tmenow\", \"$gang\");"
