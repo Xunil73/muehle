@@ -2,7 +2,7 @@
 
 import sys
 from datetime import datetime
-
+import subprocess
 
 unixtime_eingabe=datetime.combine(datetime.now().date(), \
                  datetime.strptime(sys.argv[1], '%H:%M:%S').time()).timestamp()
@@ -17,8 +17,8 @@ while not zufrieden:
 
   diff=unixtime_eingabe-unixtime_now
 
-  print(diff)
-  print('%.1f' % diff )
+  #print(diff)
+  #print('%.1f' % diff )
 
   jaSager=['y', 'Y', 'Yes', 'YES', 'yes', 'j', 'J', 'Ja', 'ja']
   rausschmeisser=['q', 'Q', 'Quit', 'quit', 'QUIT']
@@ -28,4 +28,4 @@ while not zufrieden:
   if umfrage in rausschmeisser:
     sys.exit(0)
 
-print('Programmende')
+subprocess.run(['./mtm.sh', '-x %.1f' % diff], check=True)
