@@ -20,9 +20,12 @@ while not zufrieden:
   print(diff)
   print('%.1f' % diff )
 
-  jaSager=['y', 'Y', 'Yes', 'yes', 'j', 'J', 'Ja', 'ja']
-  umfrage=input('Wollen Sie dieses Ergebnis verwenden? (y/n)')
+  jaSager=['y', 'Y', 'Yes', 'YES', 'yes', 'j', 'J', 'Ja', 'ja']
+  rausschmeisser=['q', 'Q', 'Quit', 'quit', 'QUIT']
+  umfrage=input('Wollen Sie dieses Ergebnis verwenden? (y/n/[q]uit)')
   if umfrage in jaSager:
     break
+  if umfrage in rausschmeisser:
+    sys.exit(0)
 
 print('Programmende')
