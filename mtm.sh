@@ -1,3 +1,7 @@
+# Kommentar: die Option -f funktioniert nur wenn der string ohne anfuerungszeichen doppelt/einfach uebergeben
+# wird. vielleicht laesst sich das kitten dass beides funktioniert.
+
+
 #!/bin/bash
 
 # Optionen
@@ -8,10 +12,14 @@
 # -e <n> erase line number <n>
 # -f </path/to/other/database/mydatabase.db>
 
-if [[ -f "/home/$USER/.mtm/mtm_DBlocation.conf" ]]; then
-  content=$(grep -v '^[[:space:]]*$' "/home/$USER/.mtm/mtm_DBlocation.conf")
+# Abbruch wenn die mtm.conf nicht gefunden wird.
+# In dieser Datei steht der komplette Pfad der 
+# Defaultdatenbank. 
+if [[ -f "/home/$USER/.mtm/mtm.conf" ]]; then
+  content=$(grep -v '^[[:space:]]*$' "/home/$USER/.mtm/mtm.conf")
 else
-  echo "/home/$USER/.mtm/muehle.db" > "/home/$USER/.mtm/mtm_DBlocation.conf"
+  echo "mtm: found no \"mtm.conf\" in $USER/.mtm/:"
+  exit 1
 fi
 
 db_file_name=$content
