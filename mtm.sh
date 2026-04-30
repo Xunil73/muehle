@@ -6,8 +6,15 @@
 # -x <n> +/- n in sek + save to db
 # -s <n> show data page number <n>
 # -e <n> erase line number <n>
+# -f </path/to/other/database/mydatabase.db>
 
-DB_FILE_NAME='./muehle.db'
+if [[ -f "/home/$USER/.mtm/mtm_DBlocation.conf" ]]; then
+  content=$(grep -v '^[[:space:]]*$' "/home/$USER/.mtm/mtm_DBlocation.conf")
+else
+  echo "/home/$USER/.mtm/muehle.db" > '/home/$USER/.mtm/mtm_DBlocation.conf'
+fi
+
+DB_FILE_NAME="$content"
 if [ ! -e "$DB_FILE_NAME" ]; then
   sqlite3 "$DB_FILE_NAME" < muehle.sql
 fi
@@ -52,6 +59,7 @@ do
           saveit=1 ;;
        s) showit=$OPTARG ;;
        e) eraseit=$OPTARG ;;
+       f) DB_FILE_NAME=$OPTARG ;;
        :) showit=1 ;;
    esac
 done
@@ -61,7 +69,7 @@ done
 # werden kann? habe es geloest in dem im Falle eines falschen Aufrufs der
 # Doppelpunkt-Aufruf erfolgt. Nicht schoen aber zweckmaessig...
 if [ $saveit -eq 1 ]; then  
-  sqlite3 muehle.db "INSERT OR IGNORE INTO muehle (date, time, timedelta) \
+  sqlite3 "$DB_FILE_NAME" "INSERT OR IGNORE INTO muehle (date, time, timedelta) \
                    VALUES (\"$datenow\",\"$tmenow\", \"$gang\");"
 fi
 
@@ -72,7 +80,7 @@ fi
 # seiten zu 1 Tabellenseite gerundet werden. 
 if [ $showit -gt 0 ]; then
   # wir berechnen wie viel Seiten es a 15 Zeilen gibt 
-  lines=`sqlite3 muehle.db "SELECT COUNT(*) FROM muehle;"`
+  lines=`sqlite3 "$DB_FILE_NAME" "SELECT COUNT(*) FROM muehle;"`
   speicherseiten=$(( $lines / 15 ))
   modulo=`echo "$lines % 15" | bc`
   if [ $modulo > 0 ]; then
@@ -83,7 +91,7 @@ if [ $showit -gt 0 ]; then
     exit 1
   fi
 
-  sqlite3 muehle.db ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER(ORDER BY date, time)) AS num,\
+  sqlite3 "$DB_FILE_NAME" ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER(ORDER BY date, time)) AS num,\
                                           printf ('%15s', date) AS tag,\
                                           printf ('%12s', time) AS lt,\
                                           printf ('%8.1f', timedelta) AS lt_delta\
@@ -101,7 +109,7 @@ if [ $eraseit -ne 0 ]; then
 
 
 
-  sqlite3 muehle.db "WITH nummer AS (SELECT id, ROW_NUMBER() OVER (ORDER BY date, time) AS rowNum FROM muehle) \
+  sqlite3 "$DB_FILE_NAME" "WITH nummer AS (SELECT id, ROW_NUMBER() OVER (ORDER BY date, time) AS rowNum FROM muehle) \
                      DELETE FROM muehle WHERE id IN (SELECT id FROM nummer WHERE rowNum=$eraseit);"    
 fi
 
