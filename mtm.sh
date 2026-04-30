@@ -3,9 +3,9 @@
 # Optionen
 # -d <YYYY-MM-DD>
 # -t <hh:mm>
-# -x +/- n in sek + save to db
-# -s show data
-# -e erase line number n
+# -x <n> +/- n in sek + save to db
+# -s <n> show data page number <n>
+# -e <n> erase line number <n>
 
 DB_FILE_NAME='./muehle.db'
 if [ ! -e "$DB_FILE_NAME" ]; then
@@ -43,26 +43,46 @@ function parsegang {
 saveit=0
 showit=0
 eraseit=0
-while getopts d:t:x:se: opt
+while getopts :s:d:t:x:e: opt
 do
    case $opt in
        d) datenow=`parsedate $OPTARG` ;;
        t) tmenow=`parsetime $OPTARG` ;;
        x) gang=`parsegang $OPTARG`
           saveit=1 ;;
-       s) showit=1 ;;
+       s) showit=$OPTARG ;;
        e) eraseit=$OPTARG ;;
+       :) showit=1 ;;
    esac
 done
 
+# Anmerkung zu case oben: gibt es noch eine bessere Möglichkeit getopts bei-
+# zubringen dass die Option -s ganz ohne / wahlweise mit Argumenten aufgerufen
+# werden kann? habe es geloest in dem im Falle eines falschen Aufrufs der
+# Doppelpunkt-Aufruf erfolgt. Nicht schoen aber zweckmaessig...
 if [ $saveit -eq 1 ]; then  
   sqlite3 muehle.db "INSERT OR IGNORE INTO muehle (date, time, timedelta) \
                    VALUES (\"$datenow\",\"$tmenow\", \"$gang\");"
 fi
 
 # Ausgabe formatiert, Floatwerte auf eine Stelle nach dem Komma begrenzt,
-# alles Rechtsbuendig und mit ein bissl Abstand.
-if [ $showit -eq 1 ]; then
+# alles Rechtsbuendig und in einer Box mit ein bissl Abstand. Wir berechnen die Anzahl 
+# der Tabellenseiten, da nur immer max 15 Seiten der gesamten Tabelle ausgegeben
+# werden. Die Speicherseitenmagie weiter unten kommt daher weil z.B. 1,8 Tabellen-
+# seiten zu 1 Tabellenseite gerundet werden. 
+if [ $showit -gt 0 ]; then
+  # wir berechnen wie viel Seiten es a 15 Zeilen gibt 
+  lines=`sqlite3 muehle.db "SELECT COUNT(*) FROM muehle;"`
+  speicherseiten=$(( $lines / 15 ))
+  modulo=`echo "$lines % 15" | bc`
+  if [ $modulo > 0 ]; then
+    speicherseiten=`expr $speicherseiten + 1`
+  fi
+  if [ $showit -gt $speicherseiten ]; then
+    echo "mtm: ungültige Seite: max Speicherseiten: $speicherseiten"
+    exit 1
+  fi
+
   sqlite3 muehle.db ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER(ORDER BY date, time)) AS num,\
                                           printf ('%15s', date) AS tag,\
                                           printf ('%12s', time) AS lt,\
@@ -70,10 +90,13 @@ if [ $showit -eq 1 ]; then
                                       FROM muehle) \
                                       SELECT num, tag, lt, lt_delta,\
                                           printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS zum_vortag\
-                                      FROM gesamt;"
+                                      FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15 * $showit;"
+
+  echo "Tabellenseiten: $speicherseiten" 
 fi
 
-# wir loeschen eintraege nach der ROW_NUMBER
+
+# wir loeschen Eintraege korrekt nach ROW_NUMBER
 if [ $eraseit -ne 0 ]; then
 
 

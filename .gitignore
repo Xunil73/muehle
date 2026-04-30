@@ -1,4 +1,7 @@
 *.db
 *.so
 *.tmp
+0
+*.old
+*.pyc
 
