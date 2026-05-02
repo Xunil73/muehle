@@ -6,11 +6,18 @@
 # -x <n> +/- n in sek + save to db
 # -s <n> show data page number <n>
 # -e <n> erase line number <n>
+# -f </path/to/other/database/mydatabase.db>
 
-DB_FILE_NAME='./muehle.db'
-if [ ! -e "$DB_FILE_NAME" ]; then
-  sqlite3 "$DB_FILE_NAME" < muehle.sql
+# Abbruch wenn die mtm.conf nicht gefunden wird.
+# In dieser Datei steht der komplette Pfad der 
+# Defaultdatenbank. 
+if [ -f "/home/$USER/.mtm/mtm.conf" ]; then
+  content=$(grep -v '^[[:space:]]*$' "/home/$USER/.mtm/mtm.conf")
+else
+  echo "mtm: found no \"mtm.conf\" in $USER/.mtm/:"
+  exit 1
 fi
+db_file_name=$content
 
 # Vorbelegung der Werte für das Datum und die Uhrzeit
 datenow=`date +%Y-%m-%d`
@@ -43,7 +50,7 @@ function parsegang {
 saveit=0
 showit=0
 eraseit=0
-while getopts :s:d:t:x:e: opt
+while getopts :f:s:d:t:x:e: opt
 do
    case $opt in
        d) datenow=`parsedate $OPTARG` ;;
@@ -52,16 +59,24 @@ do
           saveit=1 ;;
        s) showit=$OPTARG ;;
        e) eraseit=$OPTARG ;;
+       f) db_file_name=$OPTARG ;;
        :) showit=1 ;;
    esac
 done
+
+# gibt es unter dem angegebenen Pfad schon eine Datenbank?
+# wenn nein erzeugen wir eine
+if [ ! -e "$db_file_name" ]; then
+  sqlite3 $db_file_name < muehle.sql
+fi
+
 
 # Anmerkung zu case oben: gibt es noch eine bessere Möglichkeit getopts bei-
 # zubringen dass die Option -s ganz ohne / wahlweise mit Argumenten aufgerufen
 # werden kann? habe es geloest in dem im Falle eines falschen Aufrufs der
 # Doppelpunkt-Aufruf erfolgt. Nicht schoen aber zweckmaessig...
 if [ $saveit -eq 1 ]; then  
-  sqlite3 muehle.db "INSERT OR IGNORE INTO muehle (date, time, timedelta) \
+  sqlite3 $db_file_name "INSERT OR IGNORE INTO muehle (date, time, timedelta) \
                    VALUES (\"$datenow\",\"$tmenow\", \"$gang\");"
 fi
 
@@ -72,7 +87,7 @@ fi
 # seiten zu 1 Tabellenseite gerundet werden. 
 if [ $showit -gt 0 ]; then
   # wir berechnen wie viel Seiten es a 15 Zeilen gibt 
-  lines=`sqlite3 muehle.db "SELECT COUNT(*) FROM muehle;"`
+  lines=`sqlite3 $db_file_name "SELECT COUNT(*) FROM muehle;"`
   speicherseiten=$(( $lines / 15 ))
   modulo=`echo "$lines % 15" | bc`
   if [ $modulo > 0 ]; then
@@ -83,13 +98,13 @@ if [ $showit -gt 0 ]; then
     exit 1
   fi
 
-  sqlite3 muehle.db ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER(ORDER BY date, time)) AS num,\
+  sqlite3 $db_file_name ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER(ORDER BY date, time)) AS num,\
                                           printf ('%15s', date) AS tag,\
                                           printf ('%12s', time) AS lt,\
                                           printf ('%8.1f', timedelta) AS lt_delta\
                                       FROM muehle) \
                                       SELECT num, tag, lt, lt_delta,\
-                                          printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS zum_vortag\
+                                          printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS aenderung\
                                       FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15 * $showit;"
 
   echo "Tabellenseiten: $speicherseiten" 
@@ -101,7 +116,7 @@ if [ $eraseit -ne 0 ]; then
 
 
 
-  sqlite3 muehle.db "WITH nummer AS (SELECT id, ROW_NUMBER() OVER (ORDER BY date, time) AS rowNum FROM muehle) \
+  sqlite3 $db_file_name "WITH nummer AS (SELECT id, ROW_NUMBER() OVER (ORDER BY date, time) AS rowNum FROM muehle) \
                      DELETE FROM muehle WHERE id IN (SELECT id FROM nummer WHERE rowNum=$eraseit);"    
 fi
 
