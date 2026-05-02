@@ -1,7 +1,3 @@
-# Kommentar: die Option -f funktioniert nur wenn der string ohne anfuerungszeichen doppelt/einfach uebergeben
-# wird. vielleicht laesst sich das kitten dass beides funktioniert.
-
-
 #!/bin/bash
 
 # Optionen
@@ -15,17 +11,13 @@
 # Abbruch wenn die mtm.conf nicht gefunden wird.
 # In dieser Datei steht der komplette Pfad der 
 # Defaultdatenbank. 
-if [[ -f "/home/$USER/.mtm/mtm.conf" ]]; then
+if [ -f "/home/$USER/.mtm/mtm.conf" ]; then
   content=$(grep -v '^[[:space:]]*$' "/home/$USER/.mtm/mtm.conf")
 else
   echo "mtm: found no \"mtm.conf\" in $USER/.mtm/:"
   exit 1
 fi
-
 db_file_name=$content
-if [ ! -e "$db_file_name" ]; then
-  sqlite3 "$db_file_name" < muehle.sql
-fi
 
 # Vorbelegung der Werte für das Datum und die Uhrzeit
 datenow=`date +%Y-%m-%d`
@@ -58,7 +50,7 @@ function parsegang {
 saveit=0
 showit=0
 eraseit=0
-while getopts :s:d:t:x:e:f: opt
+while getopts :f:s:d:t:x:e: opt
 do
    case $opt in
        d) datenow=`parsedate $OPTARG` ;;
@@ -71,6 +63,13 @@ do
        :) showit=1 ;;
    esac
 done
+
+# gibt es unter dem angegebenen Pfad schon eine Datenbank?
+# wenn nein erzeugen wir eine
+if [ ! -e "$db_file_name" ]; then
+  sqlite3 $db_file_name < muehle.sql
+fi
+
 
 # Anmerkung zu case oben: gibt es noch eine bessere Möglichkeit getopts bei-
 # zubringen dass die Option -s ganz ohne / wahlweise mit Argumenten aufgerufen
