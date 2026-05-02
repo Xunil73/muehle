@@ -104,7 +104,7 @@ if [ $showit -gt 0 ]; then
                                           printf ('%8.1f', timedelta) AS lt_delta\
                                       FROM muehle) \
                                       SELECT num, tag, lt, lt_delta,\
-                                          printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS zum_vortag\
+                                          printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS aenderung\
                                       FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15 * $showit;"
 
   echo "Tabellenseiten: $speicherseiten" 
