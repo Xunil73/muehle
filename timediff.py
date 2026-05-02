@@ -4,6 +4,8 @@ import sys
 from datetime import datetime
 import subprocess
 
+# wir rechnen hier mit der Unix-Zeit. Zeit des Programmstarts minus
+# den gemessenen Wert (.timestamp = UNIX TIME)
 unixtime_eingabe=datetime.combine(datetime.now().date(), \
                  datetime.strptime(sys.argv[1], '%H:%M:%S').time()).timestamp()
 
@@ -17,8 +19,7 @@ while not zufrieden:
 
   diff=unixtime_eingabe-unixtime_now
 
-  #print(diff)
-  #print('%.1f' % diff )
+  print('%.1f Abweichung...' % diff )
 
   jaSager=['y', 'Y', 'Yes', 'YES', 'yes', 'j', 'J', 'Ja', 'ja']
   rausschmeisser=['q', 'Q', 'Quit', 'quit', 'QUIT']
