@@ -3,11 +3,14 @@
 import sys
 from datetime import datetime
 import subprocess
+from zeitRegex import createTimestring
+
+sollZeit=createTimestring(sys.argv[1])
 
 # wir rechnen hier mit der Unix-Zeit. Zeit des Programmstarts minus
 # den gemessenen Wert (.timestamp = UNIX TIME)
 unixtime_eingabe=datetime.combine(datetime.now().date(), \
-                 datetime.strptime(sys.argv[1], '%H:%M:%S').time()).timestamp()
+                 datetime.strptime(sollZeit, '%H:%M:%S').time()).timestamp()
 
 zufrieden=False
 
