@@ -30,6 +30,5 @@ def createTimestring(tme):
       if i == 5:
         print('pymtm: kann Argument nicht verarbeiten')
         sys.exit(-1)
-    re.match(ele, arg) and print("auch das geht...")
 
   return arg
