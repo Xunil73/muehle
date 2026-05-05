@@ -14,9 +14,9 @@ sollZeit=gt10sekInFuture()
 unixtime_eingabe=datetime.combine(datetime.now().date(), \
                  datetime.strptime(sollZeit, '%H:%M:%S').time()).timestamp()
 
-zufrieden=False
+satisfied=False
 
-while not zufrieden:
+while not satisfied:
 
   keyPressed=input('Drücken Sie exakt um %s Uhr eine beliebige Taste...' % sollZeit)
 
@@ -26,22 +26,22 @@ while not zufrieden:
 
   jaSager=['y', 'Y', 'Yes', 'YES', 'yes', 'j', 'J', 'Ja', 'ja']
 
-  wiederholer=['n', 'N', 'nein', 'Nein', 'no', 'No', 'NEIN', 'NO']
+  wiederholer=['a', 'A', 'again', 'Again', 'n', 'N', 'nein', 'Nein', 'no', 'No', 'NEIN', 'NO']
 
-  rausschmeisser=['q', 'Q', 'Quit', 'quit', 'QUIT']
+  finish=['q', 'Q', 'Quit', 'quit', 'QUIT']
 
   print('Abweichung zur Referenzzeit: %.1f Sekunden.' % diff)
-  umfrage=input('Ergebnis in Datenbank speichern? ([y]es/[n]ochmal/[q]uit)')
-  if umfrage in jaSager:
+  question=input('Ergebnis in Datenbank speichern? ([y]es / [a]gain / [q]uit): ')
+  if question in jaSager:
     break
 
-  if umfrage in wiederholer:
+  if question in wiederholer:
     neuerEingabestring=gt10sekInFuture()
     sollZeit=neuerEingabestring
     unixtime_eingabe=datetime.combine(datetime.now().date(), \
                      datetime.strptime(neuerEingabestring, '%H:%M:%S').time()).timestamp()
     
-  if umfrage in rausschmeisser:
+  if question in finish:
     sys.exit(0)
 
 subprocess.run(['./mtm.sh', '-x %.1f' % diff], check=True)
