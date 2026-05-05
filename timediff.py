@@ -3,9 +3,10 @@
 import sys
 from datetime import datetime
 import subprocess
-from zeitRegex import createTimestring
+from mtm_pyutils.zeitRegex import createTimestring
+from mtm_pyutils.gt10sek import gt10sekInFuture
 
-sollZeit=createTimestring(sys.argv[1])
+sollZeit=createTimestring(sys.argv[1]) # returns a string
 
 # wir rechnen hier mit der Unix-Zeit. Zeit des Programmstarts minus
 # den gemessenen Wert (.timestamp = UNIX TIME)
@@ -16,19 +17,29 @@ zufrieden=False
 
 while not zufrieden:
 
-  keyPressed=input('Drücken Sie exakt um %s Uhr eine beliebige Taste...' % sys.argv[1])
+  keyPressed=input('Drücken Sie exakt um %s Uhr eine beliebige Taste...' % sollZeit)
 
   unixtime_now=datetime.now().timestamp()
 
   diff=unixtime_eingabe-unixtime_now
 
-  print('%.1f Abweichung...' % diff )
-
   jaSager=['y', 'Y', 'Yes', 'YES', 'yes', 'j', 'J', 'Ja', 'ja']
+
+  wiederholer=['n', 'N', 'nein', 'Nein', 'no', 'No', 'NEIN', 'NO']
+
   rausschmeisser=['q', 'Q', 'Quit', 'quit', 'QUIT']
-  umfrage=input('Wollen Sie dieses Ergebnis verwenden? (y/n/[q]uit)')
+
+  print('Abweichung zur Referenzzeit: %.1f Sekunden.' % diff)
+  umfrage=input('Ergebnis in Datenbank speichern? ([y]es/[n]ochmal/[q]uit)')
   if umfrage in jaSager:
     break
+
+  if umfrage in wiederholer:
+    neuerEingabestring=gt10sekInFuture()
+    sollZeit=neuerEingabestring
+    unixtime_eingabe=datetime.combine(datetime.now().date(), \
+                     datetime.strptime(neuerEingabestring, '%H:%M:%S').time()).timestamp()
+    
   if umfrage in rausschmeisser:
     sys.exit(0)
 
