@@ -6,7 +6,8 @@ import subprocess
 from mtm_pyutils.zeitRegex import createTimestring
 from mtm_pyutils.gt10sek import gt10sekInFuture
 
-sollZeit=createTimestring(sys.argv[1]) # returns a string
+
+sollZeit=gt10sekInFuture()
 
 # wir rechnen hier mit der Unix-Zeit. Zeit des Programmstarts minus
 # den gemessenen Wert (.timestamp = UNIX TIME)
