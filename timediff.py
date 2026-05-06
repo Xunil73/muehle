@@ -6,13 +6,16 @@ import subprocess
 from mtm_pyutils.zeitRegex import createTimestring
 from mtm_pyutils.gt10sek import gt10sekInFuture
 
+def strtotmestmp(timestring): # string to timestamp -> takes a HH:MM:SS string and
+                              # converts it to an unix-timestamp
+  return datetime.combine(datetime.now().date(), \
+         datetime.strptime(timestring, '%H:%M:%S').time()).timestamp()
 
 sollZeit=gt10sekInFuture()
 
 # wir rechnen hier mit der Unix-Zeit. Zeit des Programmstarts minus
 # den gemessenen Wert (.timestamp = UNIX TIME)
-unixtime_eingabe=datetime.combine(datetime.now().date(), \
-                 datetime.strptime(sollZeit, '%H:%M:%S').time()).timestamp()
+unixtime_eingabe=strtotmestmp(sollZeit)
 
 satisfied=False
 
@@ -38,8 +41,7 @@ while not satisfied:
   if question in wiederholer:
     neuerEingabestring=gt10sekInFuture()
     sollZeit=neuerEingabestring
-    unixtime_eingabe=datetime.combine(datetime.now().date(), \
-                     datetime.strptime(neuerEingabestring, '%H:%M:%S').time()).timestamp()
+    unixtime_eingabe=strtotmestmp(neuerEingabestring)
     
   if question in finish:
     sys.exit(0)
