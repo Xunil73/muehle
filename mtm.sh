@@ -60,7 +60,7 @@ do
        s) showit=$OPTARG ;;
        e) eraseit=$OPTARG ;;
        f) db_file_name=$OPTARG ;;
-       :) showit=1 ;;
+       :) showit=0 ;;
    esac
 done
 
@@ -106,8 +106,17 @@ if [ $showit -gt 0 ]; then
                                       SELECT num, tag, lt, lt_delta,\
                                           printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS aenderung\
                                       FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15 * $showit;"
-
   echo "Tabellenseiten: $speicherseiten" 
+else
+
+  sqlite3 $db_file_name ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER(ORDER BY date, time)) AS num,\
+                                          printf ('%15s', date) AS tag,\
+                                          printf ('%12s', time) AS lt,\
+                                          printf ('%8.1f', timedelta) AS lt_delta\
+                                      FROM muehle) \
+                                      SELECT num, tag, lt, lt_delta,\
+                                          printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS aenderung\
+                                      FROM gesamt ORDER BY num ASC;"
 fi
 
 
