@@ -7,9 +7,15 @@ from mtm_pyutils.zeitRegex import createTimestring
 from mtm_pyutils.gt10sek import gt10sekInFuture
 import sqlite3
 
+# wir lesen den Inhalt der mtm.conf und wissen wo die Datenbank ist und wie 
+# sie heisst.
+conffile=open('/home/harry/.mtm/mtm.conf', 'r')
+conftext=conffile.read().strip() # strip notwendig da sqlite3.connect() sonst wegen eines 
+conffile.close()                 # Zeilenumbruchzeichens in der .conf die Datenbank nicht finden kann.
+
 # wir holen uns den letzten Messwert und nehmen ihn als Richtlinie für die 
 # Kompensation der Zeit bei der gestoppt werden soll.
-verbindung=sqlite3.connect("/home/harry/.mtm/muehle.db")
+verbindung=sqlite3.connect(conftext)
 zeiger=verbindung.cursor()
 zeiger.execute("SELECT timedelta FROM muehle ORDER BY date DESC, time DESC LIMIT 1;")
 inhalt=zeiger.fetchall()
@@ -37,23 +43,23 @@ while not satisfied:
 
   diff=unixtime_eingabe-unixtime_now
 
-  jaSager=['y', 'Y', 'Yes', 'YES', 'yes', 'j', 'J', 'Ja', 'ja']
+  saveit=['y', 'Y', 'Yes', 'YES', 'yes', 'j', 'J', 'Ja', 'ja']
 
-  wiederholer=['a', 'A', 'again', 'Again', 'n', 'N', 'nein', 'Nein', 'no', 'No', 'NEIN', 'NO']
+  repeatit=['a', 'A', 'again', 'Again', 'n', 'N', 'nein', 'Nein', 'no', 'No', 'NEIN', 'NO']
 
-  finish=['q', 'Q', 'Quit', 'quit', 'QUIT']
+  finishit=['q', 'Q', 'Quit', 'quit', 'QUIT']
 
   print('Abweichung zur Referenzzeit: %.1f Sekunden.' % diff)
   question=input('Ergebnis in Datenbank speichern? ([y]es / [a]gain / [q]uit): ')
-  if question in jaSager:
+  if question in saveit:
     break
 
-  if question in wiederholer:
+  if question in repeatit:
     neuerEingabestring=gt10sekInFuture(inhalt)
     sollZeit=neuerEingabestring
     unixtime_eingabe=strtotmestmp(neuerEingabestring)
     
-  if question in finish:
+  if question in finishit:
     sys.exit(0)
 
 subprocess.run(['./mtm.sh', '-x %.1f' % diff], check=True)
