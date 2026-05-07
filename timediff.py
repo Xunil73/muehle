@@ -37,7 +37,7 @@ satisfied=False
 
 while not satisfied:
 
-  keyPressed=input('Drücken Sie exakt um %s Uhr eine beliebige Taste...' % sollZeit)
+  keyPressed=input('Drücken Sie die Eingabetaste exakt um %s Uhr ...' % sollZeit)
 
   unixtime_now=datetime.now().timestamp()
 
@@ -55,6 +55,7 @@ while not satisfied:
     break
 
   if question in repeatit:
+    print()
     neuerEingabestring=gt10sekInFuture(inhalt)
     sollZeit=neuerEingabestring
     unixtime_eingabe=strtotmestmp(neuerEingabestring)
