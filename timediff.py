@@ -16,7 +16,7 @@ def strtotmestmp(timestring): # string to timestamp -> takes a HH:MM:SS string a
 
 
 parse=argparse.ArgumentParser()
-parse.add_argument('-n', '--no-compensation', dest='nocompensation', action="store_true")
+parse.add_argument('-n', '--no-compensation', dest='nocompensation', action="store_true", help="next measure point is computed from system's clock, not testwatch")
 args=parse.parse_args()
 
 # wir lesen den Inhalt der mtm.conf und wissen wo die Datenbank ist und wie 
