@@ -11,8 +11,9 @@ from datetime import datetime, timedelta
 # Beispiel: es ist 14:30 und 43 Sekunden. Die errechnete
 # Uhrzeit ist dann 14:30 und 55 Sekunden 
 # 43 Sek + 2 = 45 -> 45 + 10 = 55
-def gt10sekInFuture():
-  jetzt=datetime.today()
+def gt10sekInFuture(compensation=0):
+  comp=timedelta(seconds=compensation)
+  jetzt=datetime.today() + comp
   diffZuFuenf=int(jetzt.strftime('%S')) % 5
   diffZuFuenf=5-diffZuFuenf
   ziel=jetzt + timedelta(seconds=diffZuFuenf + 10)
