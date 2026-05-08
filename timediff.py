@@ -19,6 +19,12 @@ parse.add_argument('-n', '--no-compensation',\
                    dest='nocompensation',\
                    action="store_true",\
                    help="next measure point is computed from system's clock, not testwatch")
+parse.add_argument('-t', '--time', type=str,\
+                   help="input a measure time point manually. It's possible to write timepoints\n\
+                         in the forms like '12' - means 12:00:00\n\
+                                           '12:10 means 12:10:00\n\
+                                           or in full form '12:10:55'\n\
+                         You can also leave out the colons between HHMMSS")
 args=parse.parse_args()
 
 # wir lesen den Inhalt der mtm.conf und wissen wo die Datenbank ist und wie 
@@ -49,7 +55,10 @@ if args.nocompensation:
 # die Funktion mit Integerargument berechnet eine Zeit in der Zukunft, auf volle 5 Sek. teilbar
 # und diese Zeit liegt ungefähr 10 bis 15 Sekunden vor der Zeit der Testuhr. Als Argument dient in 
 # diesem Fall der Messwert des zuletzt gemessenen Vor/Nachgangs als Integer.
-newTimeMeasurePoint=gt10sekInFuture(compensationTime)
+if args.time == None:
+  newTimeMeasurePoint=gt10sekInFuture(compensationTime)
+else:
+  newTimeMeasurePoint=createTimestring(args.time)
 
 # wir rechnen hier mit der Unix-Zeit. Zeit des Programmstarts minus
 # den gemessenen Wert (.timestamp = UNIX TIME)
