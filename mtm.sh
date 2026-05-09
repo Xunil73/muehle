@@ -48,7 +48,7 @@ function parsegang {
 
 # Schalter zum Abspeichern der Werte / zum Anzeigen der Werte
 saveit=0
-showit=0
+showit=-1
 eraseit=0
 while getopts :f:s:d:t:x:e: opt
 do
@@ -107,8 +107,9 @@ if [ $showit -gt 0 ]; then
                                           printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS aenderung\
                                       FROM gesamt ORDER BY num ASC LIMIT 15 OFFSET $lines - 15 * $showit;"
   echo "Tabellenseiten: $speicherseiten" 
-else
+fi
 
+if [ $showit -eq 0 ]; then
   sqlite3 $db_file_name ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER(ORDER BY date, time)) AS num,\
                                           printf ('%15s', date) AS tag,\
                                           printf ('%12s', time) AS lt,\
