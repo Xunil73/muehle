@@ -29,10 +29,16 @@ args=parse.parse_args()
 
 # wir lesen den Inhalt der mtm.conf und wissen wo die Datenbank ist und wie 
 # sie heisst.
-conffile=open('/home/harry/.mtm/mtm.conf', 'r')
-conftext=conffile.read().strip() # strip notwendig da sqlite3.connect() sonst wegen eines 
-conffile.close()                 # Zeilenumbruchzeichens in der .conf die Datenbank nicht finden kann.
-
+try:
+  conffile=open('/home/harry/.mtm/mtm.conf', 'r')
+  conftext=conffile.read().strip() # strip notwendig da sqlite3.connect() sonst wegen eines 
+  conffile.close()                 # Zeilenumbruchzeichens in der .conf die Datenbank nicht finden kann.
+except FileNotFoundError:
+  print("Datei nicht gefunden")
+except PermissionError:
+  print("keine Berechtigung zum öffnen der Datei")
+except OSerror as e:
+  print(f"Betriebssystemfehler: {e}")
 # wir holen uns den letzten Messwert und nehmen ihn als Richtlinie für die 
 # Kompensation der Zeit bei der gestoppt werden soll.
 # Vorher habe ich die Systemzeit des Computers als Startpunkt genommen, dann bis zu den nächsten
@@ -41,15 +47,21 @@ conffile.close()                 # Zeilenumbruchzeichens in der .conf die Datenb
 # Umgekehrt gilt, die Zeit zum Messpunkt wird unpraktikabel kurz wenn die Uhr deutlich vor geht.
 # Deshalb habe ich den Startpunkt nochmals um den Betrag, der zuletzt bei der Uhr gemessen wurde, verschoben.
 # Nun haben wir eine annähernde Angleichung von berechnetem Meßpunkt und dem momentanen Vor/Nachgang der Testuhr 
-connection=sqlite3.connect(conftext)
-pntr=connection.cursor()
-pntr.execute("SELECT timedelta FROM muehle ORDER BY date DESC, time DESC LIMIT 1;")
-compensationTime=pntr.fetchall()
-connection.close()
-compensationTime=compensationTime[0][0] # fetchall gibt ein Tupel (nur index 0 belegt?!) in einer Liste zurück e.g. [(wert, )]
-if args.nocompensation:
-  compensationTime=0
-
+try:
+  connection=sqlite3.connect(conftext)
+  pntr=connection.cursor()
+  pntr.execute("SELECT timedelta FROM muehle ORDER BY date DESC, time DESC LIMIT 1;")
+  compensationTime=pntr.fetchall()
+  connection.close()
+  compensationTime=compensationTime[0][0] # fetchall gibt ein Tupel (nur index 0 belegt?!) in einer Liste zurück e.g. [(wert, )]
+  if args.nocompensation:
+    compensationTime=0
+except sqlite3.OperationalError as e:
+  print(f"DB kann nicht geöffnet werden: {e}")
+except sqlite3.DatabaseError as e:
+  print(f"SQLite-Fehler: {e}")
+except sqlite3.Error as e:
+  print(f"SQLite Fehler: {e}")
 # die Funktion ohne Integerargument berechnet eine Zeit in der Zukunft, auf volle 5 Sek. teilbar
 # und diese Zeit liegt 10 bis 15 Sekunden vor der Systemzeit des Computers
 # die Funktion mit Integerargument berechnet eine Zeit in der Zukunft, auf volle 5 Sek. teilbar
@@ -78,17 +90,32 @@ while not satisfied:
   finishit=['q', 'Q', 'Quit', 'quit', 'QUIT']
 
   print('Abweichung zur Referenzzeit: %.1f Sekunden.' % diff)
-  question=input('Ergebnis in Datenbank speichern? ([y]es / [a]gain / [q]uit): ')
-  if question in saveit:
-    break
+  try:
+    question=input('Ergebnis in Datenbank speichern? ([y]es / [a]gain / [q]uit): ')
+  
+    if question in saveit:
+      break
+    elif question in repeatit:
+      print()
+      newTimeGoal=gt10sekInFuture(compensationTime)
+      newTimeMeasurePoint=newTimeGoal
+      unixtime_time_goal=strToTimestamp(newTimeGoal)    
+    elif question in finishit:
+      sys.exit(0)
+    else:
+      print("habe die Auswahl nicht verstanden. Nichts gespeichert")
+  except EOFError:
+    print("habe keine Eingabe erhalten - EOF")
+  except KeyboardInterrupt:
+    print("Programm vom Benutzer abgebrochen. Nichts gespeichert")
 
-  if question in repeatit:
-    print()
-    newTimeGoal=gt10sekInFuture(compensationTime)
-    newTimeMeasurePoint=newTimeGoal
-    unixtime_time_goal=strToTimestamp(newTimeGoal)
-    
-  if question in finishit:
-    sys.exit(0)
-
-subprocess.run(['./mtm.sh', '-x %.1f' % diff], check=True)
+try:
+  subprocess.run(['./mtm.sh', '-x %.1f' % diff], check=True)
+except FileNotFoundError:
+  print("Datenbankbackend konnte nicht gestartet werden")
+except subprocess.CalledProcessError:
+  print("Datenbankbackend wurde mit einem Fehler beendet")
+except PermissionError:
+  print("Datenbankbackend: keine Berechtigung")
+except OSError as e:
+  print(f"Betriebssystemfehler: {e}")
