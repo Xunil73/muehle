@@ -7,6 +7,7 @@
 # -s <n> show data page number <n>
 # -e <n> erase line number <n>
 # -f </path/to/other/database/mydatabase.db>
+# -r output in raw format without a box - kills -s
 
 # Abbruch wenn die mtm.conf nicht gefunden wird.
 # In dieser Datei steht der komplette Pfad der 
@@ -50,7 +51,8 @@ function parsegang {
 saveit=0
 showit=-1
 eraseit=0
-while getopts :f:s:d:t:x:e: opt
+rawformat=0
+while getopts :f:s:d:t:x:e:r opt
 do
    case $opt in
        d) datenow=`parsedate $OPTARG` ;;
@@ -60,6 +62,7 @@ do
        s) showit=$OPTARG ;;
        e) eraseit=$OPTARG ;;
        f) db_file_name=$OPTARG ;;
+       r) rawformat=1 ;;
        :) showit=0 ;;
    esac
 done
@@ -75,7 +78,7 @@ fi
 # zubringen dass die Option -s ganz ohne / wahlweise mit Argumenten aufgerufen
 # werden kann? habe es geloest in dem im Falle eines falschen Aufrufs der
 # Doppelpunkt-Aufruf erfolgt. Nicht schoen aber zweckmaessig...
-if [ $saveit -eq 1 ]; then  
+if [ $saveit -eq 1 ] && [ $rawformat -eq 0 ]; then  
   sqlite3 $db_file_name "INSERT OR IGNORE INTO muehle (date, time, timedelta) \
                    VALUES (\"$datenow\",\"$tmenow\", \"$gang\");"
 fi
@@ -109,7 +112,7 @@ if [ $showit -gt 0 ]; then
   echo "Tabellenseiten: $speicherseiten" 
 fi
 
-if [ $showit -eq 0 ]; then
+if [ $showit -eq 0 ] && [ $rawformat -eq 0 ]; then
   sqlite3 $db_file_name ".mode box" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER(ORDER BY date, time)) AS num,\
                                           printf ('%15s', date) AS tag,\
                                           printf ('%12s', time) AS lt,\
@@ -120,6 +123,16 @@ if [ $showit -eq 0 ]; then
                                       FROM gesamt ORDER BY num ASC;"
 fi
 
+if [ $rawformat -eq 1 ]; then
+  sqlite3 $db_file_name ".mode list" ".separator \" \"" "WITH gesamt AS (SELECT printf ('%5s', ROW_NUMBER() OVER(ORDER BY date, time)) AS num,\
+                                          printf ('%15s', date) AS tag,\
+                                          printf ('%12s', time) AS lt,\
+                                          printf ('%8.1f', timedelta) AS lt_delta\
+                                      FROM muehle) \
+                                      SELECT num, tag, lt, lt_delta,\
+                                          printf ('%8.1f', lt_delta - LAG(lt_delta) OVER()) AS aenderung\
+                                      FROM gesamt ORDER BY num ASC;"
+fi 
 
 # wir loeschen Eintraege korrekt nach ROW_NUMBER
 if [ $eraseit -ne 0 ]; then
