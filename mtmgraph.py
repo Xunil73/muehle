@@ -14,16 +14,31 @@ daten=[]
 for ele in output.splitlines():
   nr, dat, tme, delta, vor = ele.split()
   #print(dat, tme, delta)
-  daten.append((f"{dat} {tme}", delta))
+  daten.append((f"{dat} {tme}", float(delta)))
 
 # Datum/Zeit umwandeln
 x = [datetime.strptime(d, "%Y-%m-%d %H:%M:%S") for d, y in daten]
 y = [y for d, y in daten]
 
-fig, ax = plt.subplots(figsize=(12, 4))
+#debug
+for i, ele in enumerate(x):
+  print(ele, y[i])
 
+fig, ax = plt.subplots(figsize=(12, 5))
+
+# Gitter einschalten
+ax.grid(True,
+        color="grey",
+        which="major",
+        linestyle="--",       # Strichart: '-', '--', '-.', ':'
+        linewidth=0.8         # Dicke)
+       )
 # Plot
-ax.plot(x, y, marker="o")
+ax.plot(x, y, marker=".")
+
+# wir setzen die Y-Achse
+ax.set_ylim(min(y)-1, max(y)+1)
+ax.set_yticks([-30,-25,-20,-15,-10,-5,0,5,10,15,20])
 
 # ---------------------------------------------------
 # Alle Tage zwischen min und max erzeugen
