@@ -18,7 +18,7 @@ parse=argparse.ArgumentParser()
 parse.add_argument('-n', '--no-compensation',\
                    dest='nocompensation',\
                    action="store_true",\
-                   help="next measure point is computed from system's clock, not testwatch")
+                   help="next measure point is computed from system's clock, not\nfrom testwatch's last timediff value stored in the database")
 parse.add_argument('-t', '--time', type=str,\
                    help="input a measure time point manually. It's possible to write timepoints\n\
                          in the forms like '12' - means 12:00:00\n\
